@@ -8,6 +8,25 @@ import numpy as np
 import cv2
 
 
+def load_classes(namesfile):
+    fp = open(namesfile, "r")
+    names = fp.read().split("\n")[:-1]
+    return names
+
+
+def prep_image(img, inp_dim):
+    """
+    Prepare image for inputting to the neural network.
+
+    Returns a Variable
+    """
+
+    img = cv2.resize(img, (inp_dim, inp_dim))
+    img = img[:, :, ::-1].transpose((2, 0, 1)).copy()
+    img = torch.from_numpy(img).float().div(255.0).unsqueeze(0)
+    return img
+
+
 def predict_transform(prediction, inp_dim, anchors, num_classes, CUDA=True):
     batch_size = prediction.size(0)
     stride = inp_dim // prediction.size(2)
@@ -193,7 +212,7 @@ def write_results(prediction, confidence, num_classes, nms_conf=0.4):
                     image_pred_class = image_pred_class[non_zero_ind].view(-1, 7)
 
             batch_ind = image_pred_class.new(image_pred_class.size(0), 1).fill_(ind)
-            
+
             # Repeat the batch_id for as many detections of the class cls in the image
             seq = batch_ind, image_pred_class
 
